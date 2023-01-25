@@ -1,172 +1,107 @@
-import MaskedView from "@react-native-masked-view/masked-view";
-import { LinearGradient } from "expo-linear-gradient";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
-	View,
-	Text,
-	TouchableOpacity,
+	StatusBar,
 	FlatList,
 	Image,
+	Animated,
+	Text,
+	View,
 	Dimensions,
+	StyleSheet,
+	TouchableOpacity,
+	Easing,
+	SafeAreaViewBase,
+	SafeAreaView,
 } from "react-native";
-import Animated from "react-native-reanimated";
-import Svg, { Rect } from "react-native-svg";
-import Genres from "../components/Genres";
-import Rating from "../components/Rating";
 import Screen from "../components/Screen";
 import fonts from "../constants/fonts";
-import { data } from "../service/api";
 const { width, height } = Dimensions.get("screen");
+import { users } from "../service/api";
 
-const AnimatedSvg = Animated.createAnimatedComponent(Svg);
+const DATA = users;
 
-const ITEM_SIZE = width * 0.72;
-const SPACING = 10;
-const SPACER_ITEM_SIZE = (width - ITEM_SIZE) / 2;
-const BACKDROP_HEIGHT = height * 0.6;
-
-const Backdrop = ({ movies, scrollX }) => {
-	return (
-		<View style={{ position: "absolute", width, height: BACKDROP_HEIGHT }}>
-			<FlatList
-				data={movies}
-				keyExtractor={(item, index) => index}
-				renderItem={({ item, index }) => {
-					if (!item.image_url) {
-						return null;
-					}
-
-					const inputRange = [(index - 2) * ITEM_SIZE, (index - 1) * ITEM_SIZE];
-
-					const translateX = scrollX.interpolate({
-						inputRange,
-						outputRange: [-width, 0],
-					});
-
-					return (
-						<MaskedView
-							style={{ position: "absolute" }}
-							maskElement={
-								<AnimatedSvg
-									width={width}
-									height={height}
-									viewBox={`0 0 ${width} ${height}`}
-									style={{ transform: [{ translateX }] }}
-								>
-									<Rect x="0" y="0" width={width} height={height} fill="red" />
-								</AnimatedSvg>
-							}
-						>
-							<Image
-								source={{ uri: item?.image_url }}
-								style={{ width, height: BACKDROP_HEIGHT }}
-								resizeMode="cover"
-							/>
-						</MaskedView>
-					);
-				}}
-			/>
-			<LinearGradient
-				colors={["transparent", "white"]}
-				style={{
-					width,
-					height: BACKDROP_HEIGHT,
-					position: "absolute",
-					bottom: 0,
-				}}
-			/>
-		</View>
-	);
-};
+const SPACING = 20;
+const AVATAR_SIZE = 70;
+const ITEM_SIZE = AVATAR_SIZE + SPACING * 3;
 
 function Home() {
-	const [movies, setMovies] = useState([
-		{ key: "left-spacer" },
-		...data,
-		{ key: "right-spacer" },
-	]);
-	const scrollX = React.useRef(new Animated.Value(0)).current;
-
+	const scrollY = React.useRef(new Animated.Value(0)).current;
 	return (
-		<View style={{ flex: 1 }}>
-			<Backdrop movies={movies} scrollX={scrollX} />
-			<Animated.FlatList
-				data={movies}
-				keyExtractor={(item, index) => index}
-				horizontal
-				contentContainerStyle={{ alignItems: "center" }}
-				snapToInterval={ITEM_SIZE}
-				showsHorizontalScrollIndicator={false}
-				decelerationRate={0}
-				bounces={false}
-				onScroll={Animated.event(
-					[{ nativeEvent: { contentOffset: { x: scrollX } } }],
-					{ useNativeDriver: true }
-				)}
-				scrollEventThrottle={16}
-				renderItem={({ item, index }) => {
-					if (!item.title) {
-						return <View style={{ width: SPACER_ITEM_SIZE }} />;
-					}
-					const inputRange = [
-						(index - 2) * ITEM_SIZE,
-						(index - 1) * ITEM_SIZE,
-						index * ITEM_SIZE,
-					];
-					const translateY = scrollX.interpolate({
-						inputRange,
-						outputRange: [100, 50, 100],
-					});
-					return (
-						<View
-							style={{
-								width: ITEM_SIZE,
-							}}
-						>
+		<Screen>
+			<View style={{ flex: 2, backgroundColor: "#FFF" }}>
+				<Animated.FlatList
+					data={DATA}
+					onScroll={Animated.event(
+						[{ nativeEvent: { contentOffset: { y: scrollY } } }],
+						{ useNativeDriver: true }
+					)}
+					keyExtractor={(item, i) => i}
+					renderItem={({ item, index }) => {
+						const inputRange = [
+							-1,
+							0,
+							ITEM_SIZE * index,
+							ITEM_SIZE * (index + 2),
+						];
+
+						const scale = scrollY.interpolate({
+							inputRange,
+							outputRange: [1, 1, 1, 0],
+						});
+
+						// About the opacity
+						const opacityInputRange = [
+							-1,
+							0,
+							ITEM_SIZE * index,
+							ITEM_SIZE * (index + 1),
+						];
+
+						const opacity = scrollY.interpolate({
+							inputRange: opacityInputRange,
+							outputRange: [1, 1, 1, 0],
+						});
+
+						return (
 							<Animated.View
 								style={{
-									marginHorizontal: SPACING,
-									padding: SPACING * 2,
-									alignSelf: "center",
-									backgroundColor: "white",
-									borderRadius: 34,
+									flexDirection: "row",
 									alignItems: "center",
-									transform: [{ translateY }],
+									backgroundColor: "#E2E2E2",
+									marginHorizontal: SPACING,
+									marginBottom: SPACING,
+									padding: SPACING,
+									borderRadius: SPACING,
+									transform: [{ scale }],
+									opacity,
 								}}
 							>
 								<Image
-									source={{ uri: item?.image_url }}
+									source={{ uri: item.picture.large }}
 									style={{
-										height: width * 0.8,
-										width: width * 0.6,
-										marginBottom: 10,
-										borderRadius: 15,
+										height: AVATAR_SIZE,
+										width: AVATAR_SIZE,
+										borderRadius: AVATAR_SIZE,
+										marginRight: SPACING,
 									}}
-									resizeMode="cover"
 								/>
-								<Text
-									style={{
-										fontSize: 18,
-										textAlign: "center",
-										fontFamily: fonts.bold,
-									}}
-								>
-									{item.title}
-								</Text>
-								<Rating rating={item?.rating} />
-								<Genres genres={item?.genres} />
-								<Text
-									numberOfLines={3}
-									style={{ textAlign: "center", fontFamily: fonts.regular }}
-								>
-									{item.plot}
-								</Text>
+								<View>
+									<Text style={{ fontFamily: fonts.bold, fontSize: 17 }}>
+										{item.name.first}
+									</Text>
+									<Text style={{ fontFamily: fonts.medium, fontSize: 15 }}>
+										{item.location.city}
+									</Text>
+									<Text style={{ fontFamily: fonts.regular }}>
+										{item.phone}
+									</Text>
+								</View>
 							</Animated.View>
-						</View>
-					);
-				}}
-			/>
-		</View>
+						);
+					}}
+				/>
+			</View>
+		</Screen>
 	);
 }
 
