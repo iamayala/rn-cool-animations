@@ -1,139 +1,80 @@
-import React from "react";
-import {
-	Vibration,
-	StatusBar,
-	Easing,
-	TextInput,
-	Dimensions,
-	Animated,
-	TouchableOpacity,
-	FlatList,
-	Text,
-	View,
-	StyleSheet,
-} from "react-native";
-const { width, height } = Dimensions.get("window");
-const colors = {
-	black: "#323F4E",
-	red: "#F76A6A",
-	text: "#ffffff",
+import { StatusBar } from "expo-status-bar";
+import React, { useState } from "react";
+import { StyleSheet, Text, View } from "react-native";
+import Animated from "react-native-reanimated";
+import fonts from "../constants/fonts";
+
+const Progress = ({ step, steps, height }) => {
+	const [width, setWidth] = useState(0);
+
+	const animatedValue = React.useRef(new Animated.Value(-1000)).current;
+	const reactive = React.useRef(new Animated.Value(-1000)).current;
+
+	React.useEffect(() => {
+		Animated.timing(animatedValue, {
+			toValue: reactive,
+			duration: 300,
+			useativeDriver: true,
+		}).start();
+	}, []);
+
+	React.useEffect(() => {
+		reactive.setValue(-width + (width * step) / steps);
+	}, [step, width]);
+
+	return (
+		<>
+			<Text
+				style={{ fontFamily: fonts.medium, marginBottom: 10, fontSize: 16 }}
+			>
+				{step}/{steps}
+			</Text>
+			<View
+				style={{
+					height,
+					backgroundColor: "rgba(0,0,0,.1)",
+					borderRadius: height,
+					overflow: "hidden",
+				}}
+			>
+				<Animated.View
+					onLayout={(ev) => {
+						const newWidth = ev.nativeEvent.layout.width;
+						setWidth(newWidth);
+					}}
+					style={{
+						height,
+						width: "100%",
+						borderRadius: height,
+						backgroundColor: "rgba(0,0,0,.5)",
+						position: "absolute",
+						left: 0,
+						top: 0,
+						transform: [{ translateX: animatedValue }],
+					}}
+				/>
+			</View>
+		</>
+	);
 };
 
-const timers = [...Array(13).keys()].map((i) => (i === 0 ? 1 : i * 5));
-const ITEM_SIZE = width * 0.38;
-const ITEM_SPACING = (width - ITEM_SIZE) / 2;
-
 function Home() {
-	const scrollX = React.useRef(new Animated.Value(0)).current;
-	const [duration, setDuration] = React.useState(timers[0]);
-	const timerAnimation = React.useRef(new Animated.Value(height)).current;
-	const animation = React.useCallback(() => {
-		Animated.sequence([
-			Animated.timing(timerAnimation, {
-				toValue: 0,
-				duration: 300,
-				useNativeDriver: true,
-			}),
-			Animated.timing(timerAnimation, {
-				toValue: height,
-				duration: duration * 1000,
-				useNativeDriver: true,
-			}).start(() => {}),
-		]);
-	}, [duration]);
+	const [index, setIndex] = useState(0);
+
+	React.useEffect(() => {
+		const interval = setInterval(() => {
+			setIndex((index + 1) % (10 + 1));
+		}, 1000);
+
+		return () => {
+			clearInterval(interval);
+		};
+	}, [index]);
 
 	return (
 		<View style={styles.container}>
 			<StatusBar hidden />
-			<Animated.View
-				style={[
-					StyleSheet.absoluteFillObject,
-					{
-						height,
-						width,
-						backgroundColor: colors.red,
-						transform: [{ translateY: timerAnimation }],
-					},
-				]}
-			/>
-			<Animated.View
-				style={[
-					StyleSheet.absoluteFillObject,
-					{
-						justifyContent: "flex-end",
-						alignItems: "center",
-						paddingBottom: 100,
-					},
-				]}
-			>
-				<TouchableOpacity onPress={animation}>
-					<View style={styles.roundButton} />
-				</TouchableOpacity>
-			</Animated.View>
-			<View
-				style={{
-					position: "absolute",
-					top: height / 3,
-					left: 0,
-					right: 0,
-					flex: 1,
-				}}
-			>
-				<Animated.FlatList
-					data={timers}
-					keyExtractor={(item) => item.toString()}
-					horizontal
-					onScroll={Animated.event(
-						[{ nativeEvent: { contentOffset: { x: scrollX } } }],
-						{ useNativeDriver: true }
-					)}
-					onMomentumScrollEnd={(ev) => {
-						const index = Math.round(
-							ev.nativeEvent.contentOffset.x / ITEM_SIZE
-						);
-						setDuration(timers[index]);
-					}}
-					bounces={false}
-					showsHorizontalScrollIndicator={false}
-					contentContainerStyle={{ paddingHorizontal: ITEM_SPACING }}
-					style={{ flexGrow: 0 }}
-					snapToInterval={ITEM_SIZE}
-					decelerationRate="fast"
-					renderItem={({ item, index }) => {
-						const inputRange = [
-							(index - 1) * ITEM_SIZE,
-							index * ITEM_SIZE,
-							(index + 1) * ITEM_SIZE,
-						];
-
-						const opacity = scrollX.interpolate({
-							inputRange,
-							outputRange: [0.4, 1, 0.4],
-						});
-
-						const scale = scrollX.interpolate({
-							inputRange,
-							outputRange: [0.7, 1, 0.7],
-						});
-
-						return (
-							<View
-								style={{
-									width: ITEM_SIZE,
-									justifyContent: "center",
-									alignItems: "center",
-								}}
-							>
-								<Animated.Text
-									style={[styles.text, { opacity, transform: [{ scale }] }]}
-								>
-									{item}
-								</Animated.Text>
-							</View>
-						);
-					}}
-				/>
-			</View>
+			<Progress step={index} steps={10} height={20} />
 		</View>
 	);
 }
@@ -143,18 +84,8 @@ export default Home;
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: colors.black,
-	},
-	roundButton: {
-		width: 80,
-		height: 80,
-		borderRadius: 80,
-		backgroundColor: colors.red,
-	},
-	text: {
-		fontSize: ITEM_SIZE * 0.8,
-		fontFamily: "Menlo",
-		color: colors.text,
-		fontWeight: "900",
+		backgroundColor: "#fff",
+		justifyContent: "center",
+		padding: 20,
 	},
 });
