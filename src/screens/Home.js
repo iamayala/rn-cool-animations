@@ -1,108 +1,227 @@
 import React from "react";
 import {
-	StatusBar,
-	FlatList,
 	Image,
 	Animated,
 	Text,
 	View,
 	Dimensions,
 	StyleSheet,
-	TouchableOpacity,
-	Easing,
-	SafeAreaViewBase,
-	SafeAreaView,
+	StatusBar,
+	ScrollView,
 } from "react-native";
-import Screen from "../components/Screen";
-import fonts from "../constants/fonts";
+import { SafeAreaView } from "react-native-safe-area-context";
 const { width, height } = Dimensions.get("screen");
-import { users } from "../service/api";
+import { Feather, Entypo } from "@expo/vector-icons";
+import fonts from "../constants/fonts";
 
-const DATA = users;
+const articleParagraphs = [
+	"One advanced diverted domestic sex repeated bringing you old. Possible procured her trifling laughter thoughts property she met way. Companions shy had solicitude favourable own. Which could saw guest man now heard but. Lasted my coming uneasy marked so should. Gravity letters it amongst herself dearest an windows by. Wooded ladies she basket season age her uneasy saw. Discourse unwilling am no described dejection incommode no listening of. Before nature his parish boy. ",
+	"Folly words widow one downs few age every seven. If miss part by fact he park just shew. Discovered had get considered projection who favourable. Necessary up knowledge it tolerably. Unwilling departure education is be dashwoods or an. Use off agreeable law unwilling sir deficient curiosity instantly. Easy mind life fact with see has bore ten. Parish any chatty can elinor direct for former. Up as meant widow equal an share least. ",
+	"Another journey chamber way yet females man. Way extensive and dejection get delivered deficient sincerity gentleman age. Too end instrument possession contrasted motionless. Calling offence six joy feeling. Coming merits and was talent enough far. Sir joy northward sportsmen education. Discovery incommode earnestly no he commanded if. Put still any about manor heard. ",
+	"Village did removed enjoyed explain nor ham saw calling talking. Securing as informed declared or margaret. Joy horrible moreover man feelings own shy. Request norland neither mistake for yet. Between the for morning assured country believe. On even feet time have an no at. Relation so in confined smallest children unpacked delicate. Why sir end believe uncivil respect. Always get adieus nature day course for common. My little garret repair to desire he esteem. ",
+	"In it except to so temper mutual tastes mother. Interested cultivated its continuing now yet are. Out interested acceptance our partiality affronting unpleasant why add. Esteem garden men yet shy course. Consulted up my tolerably sometimes perpetual oh. Expression acceptance imprudence particular had eat unsatiable. ",
+	"Had denoting properly jointure you occasion directly raillery. In said to of poor full be post face snug. Introduced imprudence see say unpleasing devonshire acceptance son. Exeter longer wisdom gay nor design age. Am weather to entered norland no in showing service. Nor repeated speaking shy appetite. Excited it hastily an pasture it observe. Snug hand how dare here too. ",
+	"Improve ashamed married expense bed her comfort pursuit mrs. Four time took ye your as fail lady. Up greatest am exertion or marianne. Shy occasional terminated insensible and inhabiting gay. So know do fond to half on. Now who promise was justice new winding. In finished on he speaking suitable advanced if. Boy happiness sportsmen say prevailed offending concealed nor was provision. Provided so as doubtful on striking required. Waiting we to compass assured. ",
+];
 
-const SPACING = 20;
-const AVATAR_SIZE = 70;
-const ITEM_SIZE = AVATAR_SIZE + SPACING * 3;
+const getImage = (i) =>
+	`https://source.unsplash.com/600x${400 + i}/?blackandwhite`;
 
 function Home() {
+	const [bottomActions, setBottomActions] = React.useState(null);
 	const scrollY = React.useRef(new Animated.Value(0)).current;
+
+	const topEdge = bottomActions?.y - height + bottomActions?.height;
+
+	const inputRange = [-1, 0, topEdge - 30, topEdge, topEdge + 1];
+
 	return (
-		<Screen>
-			<View style={{ flex: 2, backgroundColor: "#FFF" }}>
-				<Animated.FlatList
-					data={DATA}
-					onScroll={Animated.event(
-						[{ nativeEvent: { contentOffset: { y: scrollY } } }],
-						{ useNativeDriver: true }
-					)}
-					keyExtractor={(item, i) => i}
-					renderItem={({ item, index }) => {
-						const inputRange = [
-							-1,
-							0,
-							ITEM_SIZE * index,
-							ITEM_SIZE * (index + 2),
-						];
-
-						const scale = scrollY.interpolate({
-							inputRange,
-							outputRange: [1, 1, 1, 0],
-						});
-
-						// About the opacity
-						const opacityInputRange = [
-							-1,
-							0,
-							ITEM_SIZE * index,
-							ITEM_SIZE * (index + 1),
-						];
-
-						const opacity = scrollY.interpolate({
-							inputRange: opacityInputRange,
-							outputRange: [1, 1, 1, 0],
-						});
-
+		<SafeAreaView>
+			<StatusBar hidden />
+			<Animated.ScrollView
+				contentContainerStyle={{ padding: 20 }}
+				showsVerticalScrollIndicator={false}
+				onScroll={Animated.event(
+					[{ nativeEvent: { contentOffset: { y: scrollY } } }],
+					{ useNativeDrive: true }
+				)}
+			>
+				<Text style={styles.heading}>Black and White</Text>
+				{articleParagraphs.map((text, index) => {
+					return (
+						<View key={index}>
+							{index % 3 === 0 && (
+								<Image style={styles.image} source={{ uri: getImage(index) }} />
+							)}
+							<Text style={styles.paragraph}>{text}</Text>
+						</View>
+					);
+				})}
+				<View
+					style={styles.bottomActions}
+					onLayout={(ev) => setBottomActions(ev.nativeEvent.layout)}
+				/>
+				<View>
+					<Text style={styles.featuredTitle}>Featured</Text>
+					{articleParagraphs.slice(0, 3).map((text, index) => {
 						return (
-							<Animated.View
-								style={{
-									flexDirection: "row",
-									alignItems: "center",
-									backgroundColor: "#E2E2E2",
-									marginHorizontal: SPACING,
-									marginBottom: SPACING,
-									padding: SPACING,
-									borderRadius: SPACING,
-									transform: [{ scale }],
-									opacity,
-								}}
+							<View
+								key={`featured-${index}`}
+								style={{ flexDirection: "row", marginBottom: 10 }}
 							>
 								<Image
-									source={{ uri: item.picture.large }}
-									style={{
-										height: AVATAR_SIZE,
-										width: AVATAR_SIZE,
-										borderRadius: AVATAR_SIZE,
-										marginRight: SPACING,
-									}}
+									source={{ uri: getImage(index) }}
+									style={styles.featuredImage}
 								/>
-								<View>
-									<Text style={{ fontFamily: fonts.bold, fontSize: 17 }}>
-										{item.name.first}
-									</Text>
-									<Text style={{ fontFamily: fonts.medium, fontSize: 15 }}>
-										{item.location.city}
-									</Text>
-									<Text style={{ fontFamily: fonts.regular }}>
-										{item.phone}
-									</Text>
-								</View>
-							</Animated.View>
+								<Text numberOfLines={2} style={styles.paragraph}>
+									{text}
+								</Text>
+							</View>
 						);
-					}}
-				/>
-			</View>
-		</Screen>
+					})}
+				</View>
+			</Animated.ScrollView>
+			{bottomActions && (
+				<Animated.View
+					style={[
+						styles.bottomActions,
+						{
+							paddingHorizontal: 20,
+							position: "absolute",
+							left: 0,
+							right: 0,
+							bottom: 0,
+							transform: [
+								{
+									translateY: scrollY.interpolate({
+										inputRange,
+										outputRange: [0, 0, 0, 0, -1],
+									}),
+								},
+							],
+						},
+					]}
+				>
+					<View
+						style={{
+							flexDirection: "row",
+							height: 60,
+							alignItems: "center",
+							justifyContent: "center",
+						}}
+					>
+						<Feather
+							name="sun"
+							size={22}
+							color="black"
+							style={{ marginHorizontal: 10 }}
+						/>
+						<Animated.Text
+							style={{
+								fontFamily: fonts.medium,
+								opacity: scrollY.interpolate({
+									inputRange,
+									outputRange: [0, 0, 0, 1, 1],
+								}),
+							}}
+						>
+							326
+						</Animated.Text>
+					</View>
+					<View style={{ flexDirection: "row" }}>
+						<Animated.View
+							style={[
+								styles.icon,
+								{
+									opacity: scrollY.interpolate({
+										inputRange,
+										outputRange: [0, 0, 0, 0, 1],
+									}),
+								},
+							]}
+						>
+							<Feather name="share" size={22} color="black" />
+						</Animated.View>
+						<Animated.View
+							style={[
+								styles.icon,
+								{
+									transform: [
+										{
+											translateX: scrollY.interpolate({
+												inputRange,
+												outputRange: [50, 50, 50, 0, 0],
+											}),
+										},
+									],
+								},
+							]}
+						>
+							<Feather name="heart" size={22} color="black" />
+						</Animated.View>
+						<Animated.View
+							style={[
+								styles.icon,
+								{
+									opacity: scrollY.interpolate({
+										inputRange,
+										outputRange: [0, 0, 0, 0, 1],
+									}),
+								},
+							]}
+						>
+							<Feather name="bookmark" size={22} color="black" />
+						</Animated.View>
+					</View>
+				</Animated.View>
+			)}
+		</SafeAreaView>
 	);
 }
 
 export default Home;
+
+const styles = StyleSheet.create({
+	featuredImage: {
+		width: 50,
+		height: 50,
+		resizeMode: "cover",
+		marginRight: 20,
+	},
+	bottomActions: {
+		height: 80,
+		backgroundColor: "white",
+		alignItems: "center",
+		justifyContent: "space-between",
+		flexDirection: "row",
+	},
+	image: {
+		width: "100%",
+		height: height * 0.4,
+		resizeMode: "cover",
+		marginBottom: 20,
+	},
+	featuredTitle: {
+		fontSize: 20,
+		fontFamily: fonts.bold,
+		marginVertical: 20,
+	},
+	heading: {
+		marginTop: 45,
+		fontSize: 32,
+		fontFamily: fonts.bold,
+		marginBottom: 30,
+	},
+	paragraph: {
+		flex: 1,
+		marginBottom: 10,
+		fontFamily: fonts.medium,
+		lineHeight: 16 * 1.5,
+	},
+	icon: {
+		height: 50,
+		width: 50,
+		alignItems: "center",
+		justifyContent: "center",
+	},
+});
